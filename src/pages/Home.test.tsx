@@ -120,9 +120,15 @@ describe('<Home />', () => {
     const btnNewMessage = screen.getByRole('button', { name: /new message/i });
     fireEvent.click(btnNewMessage);
 
-    const subject = screen.getByRole('textbox', { name: /subject/i });
-    const recipient = screen.getByRole('textbox', { name: /recipient/i });
-    const message = screen.getByRole('textbox', { name: /my message/i });
+    const subject = screen.getByRole('textbox', {
+      name: /subject/i,
+    }) as HTMLInputElement;
+    const recipient = screen.getByRole('textbox', {
+      name: /recipient/i,
+    }) as HTMLInputElement;
+    const message = screen.getByRole('textbox', {
+      name: /my message/i,
+    }) as HTMLInputElement;
     const btnCancel = screen.getByRole('button', { name: /cancel/i });
     const btnMessage = screen.getByRole('button', { name: /send message/i });
 
@@ -265,7 +271,14 @@ describe('<Home /> -> multiple registered messages', () => {
     fireEvent.change(select, { target: { value: '1' } });
     expect(screen.getAllByRole('option').length).toBe(2);
 
-    expect(screen.getByRole('option', { name: '1' }).selected).toBe(true);
-    expect(screen.getByRole('option', { name: '2' }).selected).toBe(false);
+    const option1 = screen.getByRole('option', {
+      name: '1',
+    }) as HTMLOptionElement;
+    const option2 = screen.getByRole('option', {
+      name: '2',
+    }) as HTMLOptionElement;
+
+    expect(option1.selected).toBe(true);
+    expect(option2.selected).toBe(false);
   });
 });
