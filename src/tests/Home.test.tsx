@@ -6,7 +6,7 @@ import {
 } from '@testing-library/react';
 import { rest } from 'msw';
 import { setupServer } from 'msw/node';
-import Home from '.';
+import Home from '../pages';
 
 describe('<Home />', () => {
   const handlers = [
