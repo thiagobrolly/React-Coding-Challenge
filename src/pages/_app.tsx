@@ -1,16 +1,15 @@
-import { startFakeApi } from '@/fakeApi';
-import '@/styles/globals.css';
-import { ChakraProvider } from '@chakra-ui/react';
 import type { AppProps } from 'next/app';
-import { useEffect } from 'react';
+import { ChakraProvider } from '@chakra-ui/react';
+import { theme } from '@/styles/theme';
+import { makeServer } from '@/services/mirage';
+
+if (process.env.NODE_ENV === 'development') {
+  makeServer();
+}
 
 export default function App({ Component, pageProps }: AppProps) {
-  useEffect(() => {
-    startFakeApi();
-  }, []);
-
   return (
-    <ChakraProvider>
+    <ChakraProvider theme={theme}>
       <Component {...pageProps} />
     </ChakraProvider>
   );

@@ -1,3 +1,10 @@
 {
-  "extends": "next/core-web-vitals"
+  "extends": ["@thiago_brolly/eslint-config/reactTS", "next/core-web-vitals"],
+  "rules": {
+    "import/no-extraneous-dependencies": "off",
+    "radix": "off",
+    "react/no-array-index-key": "off",
+    "no-use-before-define": "off",
+    "@typescript-eslint/no-use-before-define": ["error"]
+  }
 }
