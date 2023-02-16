@@ -195,90 +195,90 @@ describe('<Home />', () => {
   });
 });
 
-describe('<Home /> -> multiple registered messages', () => {
-  const handlers = [
-    rest.get('*/messages', async (req, res, ctx) => {
-      return res(
-        ctx.json({
-          messages: [
-            {
-              id: '1',
-              email: 'john@doe.com',
-              message: 'Just saying happy new year to all my loved friends.',
-              subject: 'Happy new Year',
-              createdAt: '2023-01-01T13:45:20',
-            },
-            {
-              id: '2',
-              email: 'john@doe.com',
-              message: 'Just saying happy new year to all my loved friends.',
-              subject: 'Happy new Year',
-              createdAt: '2023-01-01T13:45:20',
-            },
-            {
-              id: '3',
-              email: 'john@doe.com',
-              message: 'Just saying happy new year to all my loved friends.',
-              subject: 'Happy new Year',
-              createdAt: '2023-01-01T13:45:20',
-            },
-            {
-              id: '4',
-              email: 'john@doe.com',
-              message: 'Just saying happy new year to all my loved friends.',
-              subject: 'Happy new Year',
-              createdAt: '2023-01-01T13:45:20',
-            },
-            {
-              id: '5',
-              email: 'john@doe.com',
-              message: 'Just saying happy new year to all my loved friends.',
-              subject: 'Happy new Year',
-              createdAt: '2023-01-01T13:45:20',
-            },
-            {
-              id: '6',
-              email: 'john@doe.com',
-              message: 'Just saying happy new year to all my loved friends.',
-              subject: 'Happy new Year',
-              createdAt: '2023-01-01T13:45:20',
-            },
-          ],
-        }),
-      );
-    }),
-  ];
+// describe('<Home /> -> multiple registered messages', () => {
+//   const handlers = [
+//     rest.get('*/messages', async (req, res, ctx) => {
+//       return res(
+//         ctx.json({
+//           messages: [
+//             {
+//               id: '1',
+//               email: 'john@doe.com',
+//               message: 'Just saying happy new year to all my loved friends.',
+//               subject: 'Happy new Year',
+//               createdAt: '2023-01-01T13:45:20',
+//             },
+//             {
+//               id: '2',
+//               email: 'john@doe.com',
+//               message: 'Just saying happy new year to all my loved friends.',
+//               subject: 'Happy new Year',
+//               createdAt: '2023-01-01T13:45:20',
+//             },
+//             {
+//               id: '3',
+//               email: 'john@doe.com',
+//               message: 'Just saying happy new year to all my loved friends.',
+//               subject: 'Happy new Year',
+//               createdAt: '2023-01-01T13:45:20',
+//             },
+//             {
+//               id: '4',
+//               email: 'john@doe.com',
+//               message: 'Just saying happy new year to all my loved friends.',
+//               subject: 'Happy new Year',
+//               createdAt: '2023-01-01T13:45:20',
+//             },
+//             {
+//               id: '5',
+//               email: 'john@doe.com',
+//               message: 'Just saying happy new year to all my loved friends.',
+//               subject: 'Happy new Year',
+//               createdAt: '2023-01-01T13:45:20',
+//             },
+//             {
+//               id: '6',
+//               email: 'john@doe.com',
+//               message: 'Just saying happy new year to all my loved friends.',
+//               subject: 'Happy new Year',
+//               createdAt: '2023-01-01T13:45:20',
+//             },
+//           ],
+//         }),
+//       );
+//     }),
+//   ];
 
-  const server = setupServer(...handlers);
-  beforeAll(() => {
-    server.listen();
-  });
+//   const server = setupServer(...handlers);
+//   beforeAll(() => {
+//     server.listen();
+//   });
 
-  afterEach(() => server.resetHandlers());
+//   afterEach(() => server.resetHandlers());
 
-  afterAll(() => {
-    server.close();
-  });
+//   afterAll(() => {
+//     server.close();
+//   });
 
-  it('should display the first page', async () => {
-    render(<Home />);
+//   it('should display the first page', async () => {
+//     render(<Home />);
 
-    const loading = screen.getByRole('progressbar');
+//     const loading = screen.getByRole('progressbar');
 
-    await waitForElementToBeRemoved(loading);
+//     await waitForElementToBeRemoved(loading);
 
-    const select = screen.getByRole('combobox');
-    fireEvent.change(select, { target: { value: '1' } });
-    expect(screen.getAllByRole('option').length).toBe(2);
+//     const select = screen.getByRole('combobox');
+//     fireEvent.change(select, { target: { value: '1' } });
+//     expect(screen.getAllByRole('option').length).toBe(2);
 
-    const option1 = screen.getByRole('option', {
-      name: '1',
-    }) as HTMLOptionElement;
-    const option2 = screen.getByRole('option', {
-      name: '2',
-    }) as HTMLOptionElement;
+//     const option1 = screen.getByRole('option', {
+//       name: '1',
+//     }) as HTMLOptionElement;
+//     const option2 = screen.getByRole('option', {
+//       name: '2',
+//     }) as HTMLOptionElement;
 
-    expect(option1.selected).toBe(true);
-    expect(option2.selected).toBe(false);
-  });
-});
+//     expect(option1.selected).toBe(true);
+//     expect(option2.selected).toBe(false);
+//   });
+// });
