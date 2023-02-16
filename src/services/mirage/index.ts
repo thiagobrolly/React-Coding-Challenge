@@ -39,20 +39,20 @@ export function makeServer() {
       this.namespace = 'api';
       this.timing = 750;
 
-      this.get('/messages', (schema) => {
-        return schema.messages.all();
+      this.get('/messages', () => {
+        return this.schema.all('message');
       });
 
       this.post('/messages', (schema, request) => {
         const data = JSON.parse(request.requestBody);
 
-        return schema.messages.create(data);
+        return schema.create('message', data);
       });
 
       this.delete('/messages/:id', (schema, request) => {
         const { id } = request.params;
 
-        return schema.messages.find(id).destroy();
+        return schema.find('message', id);
       });
 
       this.namespace = '';
