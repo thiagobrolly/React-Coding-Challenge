@@ -1,5 +1,6 @@
+import { FormEvent, useEffect, useState } from 'react';
 import Head from 'next/head';
-import { BiTrashAlt } from 'react-icons/bi';
+
 import {
   Avatar,
   Box,
@@ -25,117 +26,24 @@ import {
   Input,
   Textarea,
   Spinner,
-  IconButton,
   Th,
   Select,
   useToast,
+  Flex,
 } from '@chakra-ui/react';
-import Template from '@/components/Template';
-import { useEffect, useState } from 'react';
-import { IMessage } from '@/common/types';
-import { listMessages, removeMessage } from '@/fakeApi';
+import Template from '../components/Template';
+import { IMessage } from '../common/types';
 
-import { createMessage } from '@/fakeApi';
-import DangerConfirmation from '@/components/ConfirmationModal';
-import MessageModal from '@/components/MessageModal';
+import { DangerConfirmation } from '../components/DangerConfirmation';
+import { MessageModal } from '../components/MessageModal';
+import { api } from '../services/api';
 
 export default function Home() {
   const toast = useToast();
+  const { isOpen, onClose, onOpen } = useDisclosure();
 
   const [loading, setLoading] = useState(true);
   const [messages, setMessages] = useState<IMessage[]>([]);
-
-  useEffect(() => {
-    const getData = async (): Promise<void> => {
-      setLoading(true);
-      const { data } = await listMessages();
-
-      setMessages(data);
-      setLoading(false);
-    };
-    getData();
-  }, []);
-
-  const convertAmPm = (date: string): string => {
-    var dt = new Date(date);
-    var hours = dt.getHours();
-    var AmOrPm = hours >= 12 ? 'pm' : 'am';
-    hours = hours % 12 || 12;
-    var minutes = dt.getMinutes();
-    var finalTime = hours + ':' + minutes + ' ' + AmOrPm;
-    return finalTime;
-  };
-
-  const [removingId, setRemovingId] = useState<string>();
-  const handleRemoveMessage = async (message: IMessage): Promise<void> => {
-    setRemovingId(message._id);
-    await removeMessage(message._id);
-
-    setMessages(messages.filter((m) => m._id !== message._id));
-    setRemovingId(undefined);
-
-    toast({
-      status: 'success',
-      title: 'Message removed successfully',
-    });
-  };
-
-  const renderMessages = () => {
-    return (
-      <Table>
-        <Thead>
-          <Tr>
-            <Th>User</Th>
-            <Th>Subject</Th>
-            <Th>Date</Th>
-            <Th>Action</Th>
-          </Tr>
-        </Thead>
-        <Tbody>
-          {messages
-            .slice(page * maxPerPage, page * maxPerPage + maxPerPage)
-            .map((message, index) => (
-              <Tr
-                key={message._id}
-                cursor='pointer'
-                _hover={{ bg: 'gray.50' }}
-                onClick={() => setSelectedMessage(message)}
-              >
-                <Td>
-                  <HStack spacing='16px'>
-                    <Avatar name={message.user.email} />
-                    <Text>{message.user.email}</Text>
-                  </HStack>
-                </Td>
-                <Td w='100%' fontWeight={'600'}>
-                  {message.subject}
-                </Td>
-                <Td whiteSpace={'nowrap'}>
-                  {message.createdAt.substring(0, 10)} at{' '}
-                  {convertAmPm(message.createdAt)}
-                </Td>
-                <Td>
-                  <DangerConfirmation
-                    button={
-                      <IconButton
-                        colorScheme={'red'}
-                        aria-label='remove'
-                        icon={<BiTrashAlt />}
-                        isLoading={removingId === message._id}
-                        size='sm'
-                      />
-                    }
-                    action={() => handleRemoveMessage(message)}
-                  />
-                </Td>
-              </Tr>
-            ))}
-        </Tbody>
-      </Table>
-    );
-  };
-
-  const { isOpen, onClose, onOpen } = useDisclosure();
 
   const [subject, setSubject] = useState('');
   const [recipient, setRecipient] = useState('');
@@ -143,34 +51,38 @@ export default function Home() {
 
   const [sending, setSending] = useState(false);
 
-  const handleSendMessage = async (): Promise<void> => {
-    setSending(true);
+  const [selectedMessage, setSelectedMessage] = useState<IMessage>();
+  const [messageIsOpen, setMessageIsOpen] = useState(false);
 
-    const { data } = await createMessage({
-      user: {
-        email: recipient,
-      },
-      message: content,
-      subject,
-    });
-
-    setMessages([...messages, data]);
-
-    setRecipient('');
-    setContent('');
-    setSubject('');
-    onClose();
-
-    setSending(false);
-    toast({
-      status: 'success',
-      title: 'Message sent successfully',
-    });
-  };
+  const [removingId, setRemovingId] = useState<string>('');
 
   const [page, setPage] = useState(0);
   const [pages, setPages] = useState(0);
   const maxPerPage = 5;
+
+  useEffect(() => {
+    async function getData() {
+      setLoading(true);
+
+      try {
+        const response = await api.get('messages');
+        setMessages(response.data.messages);
+      } catch (error) {
+        toast({
+          title: 'Error while fetching messages',
+          description: error,
+          status: 'error',
+          duration: 9000,
+          isClosable: true,
+        });
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    getData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     if (messages) setPages(Math.ceil(messages.length / maxPerPage));
@@ -182,10 +94,7 @@ export default function Home() {
     if (pages - 1 < page) {
       setPage(pages - 1);
     }
-  }, [pages]);
-
-  const [selectedMessage, setSelectedMessage] = useState<IMessage>();
-  const [messageIsOpen, setMessageIsOpen] = useState(false);
+  }, [pages, page]);
 
   useEffect(() => {
     if (selectedMessage) {
@@ -195,6 +104,140 @@ export default function Home() {
 
     setMessageIsOpen(false);
   }, [selectedMessage]);
+
+  const convertAmPm = (date: string): string => {
+    const dt = new Date(date);
+    let hours = dt.getHours();
+    const AmOrPm = hours >= 12 ? 'pm' : 'am';
+    hours = hours % 12 || 12;
+    const minutes = dt.getMinutes();
+    const finalTime = `${hours}:${minutes} ${AmOrPm}`;
+    return finalTime;
+  };
+
+  const handleRemoveMessage = async (id: string) => {
+    setRemovingId(id);
+
+    try {
+      await api.delete(`messages/${id}`);
+
+      setMessages(messages.filter((m) => m.id !== id));
+
+      toast({
+        status: 'success',
+        title: 'Message removed successfully',
+      });
+    } catch (error) {
+      toast({
+        title: 'Something went wrong!',
+        description: 'Error while deleting the contact',
+        status: 'error',
+        duration: 9000,
+        isClosable: true,
+      });
+    } finally {
+      setRemovingId('');
+      onClose();
+    }
+  };
+
+  const handleSendMessage = async (e: FormEvent) => {
+    e.preventDefault();
+    setSending(true);
+
+    try {
+      const data = {
+        email: recipient,
+        message: content,
+        subject,
+        createdAt: new Date(),
+      };
+
+      const response = await api.post('/messages', data);
+
+      const { message } = response.data;
+
+      setMessages([...messages, message]);
+
+      setRecipient('');
+      setContent('');
+      setSubject('');
+
+      toast({
+        status: 'success',
+        title: 'Message sent successfully',
+      });
+    } catch (error) {
+      toast({
+        title: 'Error while creating message',
+        description: error,
+        status: 'error',
+        duration: 9000,
+        isClosable: true,
+      });
+    } finally {
+      onClose();
+      setSending(false);
+    }
+  };
+
+  const renderMessages = () => {
+    return (
+      <Table variant="striped" colorScheme="whiteAlpha">
+        <Thead>
+          <Tr>
+            <Th>User</Th>
+            <Th>Subject</Th>
+            <Th>Date</Th>
+            <Th>Action</Th>
+          </Tr>
+        </Thead>
+        <Tbody>
+          {messages.length < 1 ? (
+            <Tr>
+              <Td colSpan={4}>
+                <Text p="16px">Nenhuma messagem cadastrada.</Text>
+              </Td>
+            </Tr>
+          ) : (
+            messages
+              .slice(page * maxPerPage, page * maxPerPage + maxPerPage)
+              .map((message) => (
+                <Tr
+                  aria-label="opiton"
+                  role="button"
+                  key={message.id}
+                  cursor="pointer"
+                  _hover={{ bg: 'gray.900' }}
+                  onClick={() => setSelectedMessage(message)}
+                >
+                  <Td>
+                    <HStack spacing="16px">
+                      <Avatar name={message.email} />
+                      <Text>{message.email}</Text>
+                    </HStack>
+                  </Td>
+                  <Td w="100%" fontWeight="600">
+                    {message.subject}
+                  </Td>
+                  <Td whiteSpace="nowrap">
+                    {message.createdAt?.substring(0, 10)} at{' '}
+                    {convertAmPm(message.createdAt)}
+                  </Td>
+                  <Td>
+                    <DangerConfirmation
+                      buttonTrash
+                      isLoading={removingId === message.id}
+                      action={() => handleRemoveMessage(message.id)}
+                    />
+                  </Td>
+                </Tr>
+              ))
+          )}
+        </Tbody>
+      </Table>
+    );
+  };
 
   return (
     <>
@@ -207,25 +250,30 @@ export default function Home() {
           onClose={() => setSelectedMessage(undefined)}
           message={selectedMessage}
           remove={handleRemoveMessage}
+          isLoading={removingId === selectedMessage?.id}
         />
-        <HStack justifyContent={'space-between'} mb='24px'>
-          <Heading as='h2' fontSize='24px'>
+
+        <HStack justifyContent="space-between" mb="24px">
+          <Heading data-test="heading" as="h2" fontSize="24px">
             Messages
           </Heading>
           <Box>
-            <Button onClick={onOpen} colorScheme='blue'>
+            <Button onClick={onOpen} colorScheme="blue">
               New Message
             </Button>
 
             <Modal isOpen={isOpen} onClose={onClose}>
               <ModalOverlay />
-              <ModalContent maxW={'800px'}>
+              <ModalContent maxW="800px" bg="gray.800">
                 <ModalHeader>New message</ModalHeader>
                 <ModalCloseButton />
                 <ModalBody>
-                  <FormControl mb='24px'>
+                  <FormControl mb="24px">
                     <FormLabel>Subject</FormLabel>
                     <Input
+                      bgColor="gray.900"
+                      _hover={{ bgColor: 'gray.900' }}
+                      variant="filled"
                       value={subject}
                       onChange={(e) => setSubject(e.target.value)}
                     />
@@ -233,14 +281,21 @@ export default function Home() {
                   <FormControl>
                     <FormLabel>Recipient</FormLabel>
                     <Input
+                      bgColor="gray.900"
+                      _hover={{ bgColor: 'gray.900' }}
+                      variant="filled"
                       value={recipient}
                       onChange={(e) => setRecipient(e.target.value)}
-                      placeholder='someone@mail.com'
+                      placeholder="someone@mail.com"
                     />
                   </FormControl>
-                  <FormControl mt='24px'>
+
+                  <FormControl mt="24px">
                     <FormLabel>My message</FormLabel>
                     <Textarea
+                      bgColor="gray.900"
+                      _hover={{ bgColor: 'gray.900' }}
+                      variant="filled"
                       value={content}
                       onChange={(e) => setContent(e.target.value)}
                     />
@@ -248,13 +303,13 @@ export default function Home() {
                 </ModalBody>
 
                 <ModalFooter>
-                  <Button variant='ghost' mr={3} onClick={onClose}>
+                  <Button variant="ghost" mr={3} onClick={onClose}>
                     Cancel
                   </Button>
                   <Button
                     onClick={handleSendMessage}
                     isDisabled={!subject || !recipient || !content}
-                    colorScheme='blue'
+                    colorScheme="blue"
                     isLoading={sending}
                   >
                     Send message
@@ -264,20 +319,33 @@ export default function Home() {
             </Modal>
           </Box>
         </HStack>
-        {loading ? <Spinner /> : renderMessages()}
+
+        {loading ? (
+          <Flex p="24px" alignItems="center" justifyContent="center">
+            <Spinner role="progressbar" />
+          </Flex>
+        ) : (
+          renderMessages()
+        )}
 
         {!loading && (
-          <HStack justifyContent={'flex-end'} mt='24px'>
+          <HStack justifyContent="flex-end" mt="24px">
             <Text>Page</Text>
             <Select
-              w='90px'
+              data-testid="select"
+              w="90px"
               value={page}
               onChange={(e) => setPage(parseInt(e.target.value))}
             >
               {Array.from({
                 length: pages,
               }).map((_el, index) => (
-                <option key={index} value={index}>
+                <option
+                  data-testid="select-option"
+                  key={index}
+                  value={index}
+                  style={{ background: '#1F2029', color: 'white' }}
+                >
                   {index + 1}
                 </option>
               ))}
